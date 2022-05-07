@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  role      Role?    @relation(fields: [role_id], references: [id])
+  role_id   Int?
+  email     String   @unique
+  password  String   @db.Text
+  fullName  String   @db.Text
+  phone     String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  token     Token[]
+
+  @@map("user")
+}
+
+model Role {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  description     String            @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now()) @updatedAt
+  role_permission Role_permission[]
+  user            User[]
+
+  @@map("role")
+}
+
+model Permission {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique @db.VarChar(255)
+  description     String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now()) @updatedAt
+  role_permission Role_permission[]
+
+  @@map("permission")
+}
+
+model Role_permission {
+  id         Int        @id @default(autoincrement())
+  role       Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [perm_id], references: [id], onDelete: Cascade)
+  role_id    Int
+  perm_id    Int
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @default(now()) @updatedAt
+
+  @@map("role_permission")
+}
+
+model Token {
+  id      String   @id @default(uuid()) @db.VarChar(255)
+  token   String   @db.VarChar(255)
+  user    User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id Int
+  expires DateTime
+
+  @@map("token")
+}
